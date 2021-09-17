@@ -1,0 +1,19 @@
+---
+- name: master_host defined
+  block:
+    - name: Configure nis master
+      include_tasks: nis-master.yml
+      when: "master_host in inventory_hostname"
+  when: master_host | length > 0
+
+- name: client_group defined
+  block:
+    - name: Configure nis clients
+      include_tasks: nis-client.yml
+      when: "client_group in group_names"
+  when: client_group | length > 0
+
+- name: Some reminder
+  debug:
+    msg: remember to sudo make -C /var/yp/ after adduser on master
+    run_once: true

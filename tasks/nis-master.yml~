@@ -1,0 +1,45 @@
+- name: Install nis to server
+  package:
+    name: nis
+    state: present
+
+- name: Ensure server /etc/defaultdomain
+  lineinfile:
+    path: /etc/defaultdomain
+    regexp: "^.*$"
+    line: "{{ nisdomain }}"
+    backup: yes
+
+- name: Modify server /etc/default/nis
+  lineinfile:
+    path: /etc/default/nis
+    regexp: "^NISSERVER="
+    line: "NISSERVER=master"
+    backup: yes
+
+- name: Modify server /etc/ypserv.securenets
+  lineinfile:
+    path: /etc/ypserv.securenets
+    regexp: "^0.0.0.0"
+    line: "{{ subnet_mask }}        {{ subnet_ip }}"
+    backup: yes
+
+- name: Restart rpcbind/ypbind
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - rpcbind
+    - ypbind
+
+- name: Execute /usr/lib/yp/ypinit -m
+  shell: set -o pipefail && cat /dev/null | /usr/lib/yp/ypinit -m
+  args:
+    executable: /usr/bin/bash
+  register: myoutput
+  changed_when: myoutput.stdout | length > 0
+  failed_when: myoutput.stderr | length > 0
+
+- name: Make in /var/yp/
+  make:
+    chdir: /var/yp/

@@ -1,0 +1,61 @@
+- name: Install nis to client
+  package:
+    name: nis
+    state: present
+
+- name: Ensure client /etc/defaultdomain
+  lineinfile:
+    path: /etc/defaultdomain
+    regexp: "^.*$"
+    line: "{{ nisdomain }}"
+    backup: yes
+
+- name: Modify client /etc/yp.conf
+  lineinfile:
+    path: /etc/yp.conf
+    regexp: "^ypserver"
+    line: "ypserver {{ master_ip }}"
+    backup: yes
+
+- name: Modify client /etc/passwd
+  lineinfile:
+    path: /etc/passwd
+    line: "+::::::"
+    backup: yes
+
+- name: Modify client /etc/group
+  lineinfile:
+    path: /etc/group
+    line: "+:::"
+    backup: yes
+
+- name: Modify client /etc/shadow
+  lineinfile:
+    path: /etc/shadow
+    line: "+::::::::"
+    backup: yes
+
+- name: Restart ypbind
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - ypbind
+
+- name: Modify client /etc/nsswitch.conf
+  replace:
+    path: /etc/nsswitch.conf
+    regexp: '^({{ item }}:.*)$'
+    replace: '\1 nis'
+    backup: yes
+  loop:
+    - shadow
+    - passwd
+    - group
+
+- name: Fix (maybe) multiple nis per line in /etc/nsswitch.conf
+  replace:
+    path: /etc/nsswitch.conf
+    regexp: '(nis.*nis)'
+    replace: 'nis'
+    backup: yes
