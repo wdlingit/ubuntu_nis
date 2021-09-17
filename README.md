@@ -24,7 +24,7 @@ Example Playbook
     - hosts: all
       become: yes
       roles:
-        - role: nis
+        - role: wdlingit.ubuntu_nis
           master_host: master
           client_group: client_group_defined_in_hosts
           nisdomain: mydomain
