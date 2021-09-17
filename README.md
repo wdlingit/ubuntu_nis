@@ -1,4 +1,4 @@
-Role Name
+ubuntu_nis
 =========
 
 Install a nis master and a set of nis clients. Tested on ubuntu20 xen guests.
