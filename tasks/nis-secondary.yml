@@ -1,0 +1,41 @@
+- name: Install nis to secondary server, this takes time
+  package:
+    name: nis
+    state: present
+
+- name: Ensure server /etc/defaultdomain
+  lineinfile:
+    path: /etc/defaultdomain
+    regexp: "^.*$"
+    line: "{{ nisdomain }}"
+    backup: yes
+
+- name: Modify server /etc/default/nis
+  lineinfile:
+    path: /etc/default/nis
+    regexp: "^NISSERVER="
+    line: "NISSERVER=slave"
+    backup: yes
+
+- name: Modify server /etc/ypserv.securenets
+  lineinfile:
+    path: /etc/ypserv.securenets
+    regexp: "^0.0.0.0"
+    line: "{{ subnet_mask }}        {{ subnet_ip }}"
+    backup: yes
+
+- name: Restart rpcbind/ypbind, this takes time
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - rpcbind
+    - ypbind
+
+- name: Execute /usr/lib/yp/ypinit -s
+  shell: /usr/lib/yp/ypinit -s {{ master_host }}
+  args:
+    executable: /usr/bin/bash
+  register: myoutput
+  changed_when: myoutput.stdout | length > 0
+  failed_when: myoutput.stderr | length > 0

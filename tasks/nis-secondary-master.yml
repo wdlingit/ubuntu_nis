@@ -1,0 +1,24 @@
+- name: Set server as one of clients
+  include_tasks: nis-client.yml
+
+- name: Modify server /var/yp/Makefile
+  lineinfile:
+    path: /var/yp/Makefile
+    regexp: "^NOPUSH="
+    line: "NOPUSH=false"
+    backup: yes
+
+- name: Modify server /etc/ypserv.securenets
+  lineinfile:
+    path: /etc/ypserv.securenets
+    regexp: "^0.0.0.0"
+    line: "{{ subnet_mask }}        {{ subnet_ip }}"
+    backup: yes
+
+- name: Execute /usr/lib/yp/ypinit -m
+  shell: set -o pipefail && echo "{{ secondary_host }}" | /usr/lib/yp/ypinit -m
+  args:
+    executable: /usr/bin/bash
+  register: myoutput
+  changed_when: myoutput.stdout | length > 0
+  failed_when: myoutput.stderr | length > 0

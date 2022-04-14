@@ -13,6 +13,32 @@
       when: "client_group in group_names"
   when: client_group | length > 0
 
+- name: secondary_host defined
+  block:
+    - name: Configure nis secondary server
+      include_tasks: nis-secondary.yml
+      when: "secondary_host in inventory_hostname"
+
+    - name: Configure nis master server for secondary
+      include_tasks: nis-secondary-master.yml
+      when: "master_host in inventory_hostname"
+
+    - name: check block
+      block:
+        - name: Insert ypserver secondary setting
+          lineinfile:
+            path: /etc/yp.conf
+            line: "ypserver {{ hostvars[secondary_host]['ansible_default_ipv4']['address'] }}"
+            backup: yes
+        - name: Restart ypbind
+          service:
+            name: "{{ item }}"
+            state: restarted
+          loop:
+            - ypbind
+      when: "client_group in group_names"
+  when: secondary_host | length > 0
+
 - name: Some reminder
   debug:
     msg: remember to sudo make -C /var/yp/ after adduser on master
