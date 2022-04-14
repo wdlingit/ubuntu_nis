@@ -2,6 +2,9 @@
 # master host
 master_host: ""
 
+# secondary server host
+secondary_host: ""
+
 # client group
 client_group: ""
 

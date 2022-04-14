@@ -13,7 +13,6 @@
 - name: Modify client /etc/yp.conf
   lineinfile:
     path: /etc/yp.conf
-    regexp: "^ypserver"
     line: "ypserver {{ master_ip }}"
     backup: yes
 
@@ -52,6 +51,7 @@
     - shadow
     - passwd
     - group
+    - hosts
 
 - name: Fix (maybe) multiple nis per line in /etc/nsswitch.conf
   replace:
